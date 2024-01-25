@@ -53,7 +53,7 @@ public:
     void run();
     std::string findClientChatroom(int client_socket);
 
-    bool isTakenUsername(const std::string &username);
+    bool isUsernameAvailable(const std::string &username);
 
 private:
     std::string ip;
