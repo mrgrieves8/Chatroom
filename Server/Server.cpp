@@ -107,7 +107,7 @@ bool Server::initEpoll() {
 std::atomic<bool> running(true);
 
 void signalHandler(int signum) {
-    std::cout << "Interrupt signal (" << signum << ") received. Shutting down..." << std::endl;
+    std::cout << "\nInterrupt signal (" << signum << ") received. Shutting down..." << std::endl;
     running = false;
 }
 
