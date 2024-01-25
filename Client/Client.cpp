@@ -62,6 +62,7 @@ void Client::startReceivingMessages() {
                     notifyReadyToSend();
                     break;
                 case MessageType::QUIT:
+                    state = ClientState::Quitting;
                     std::cerr << "Connection closed." << std::endl;
                     return; // Exiting the thread
                 case MessageType::POST:
@@ -89,35 +90,70 @@ void Client::startChatSession() {
         return;
     }
     startReceivingMessages();
+
     if (state == ClientState::PreLogin) {
         handleServerResponse(); // Handle initial setup like username
         state = ClientState::SelectingChatroom;
     }
 
-    std::string message;
-    while (true) {
-    waitForMessageReady();
-        if (state == ClientState::SelectingChatroom) {
-            std::getline(std::cin, message);
-            if (message.rfind("/create ", 0) == 0) {
-                // Extracting chatroom info from the command
-                std::string chatroomInfo = message.substr(8); // Assuming command is "/create "
-                sendMessage(Message(MessageType::CREATE, chatroomInfo));
-            } else {
-                sendMessage(Message(MessageType::JOIN, message));
-            }
-        } else if (state == ClientState::InChatroom) {
-            std::getline(std::cin, message);
-            if (message == "/leave") {
-                sendMessage(Message(MessageType::MENU, ""));
-            } else {
-                sendMessage(Message(MessageType::POST, message));
-            }
+    while (state != ClientState::Quitting) {
+        waitForMessageReady();
+
+        switch (state) {
+            case ClientState::SelectingChatroom:
+                handleSelectingChatroom();
+                break;
+
+            case ClientState::InChatroom:
+                handleInChatroom();
+                break;
+
+            case ClientState::Quitting:
+                handleQuitting();
+                return;
+
         }
+
         setNotReadyToSend();
     }
-
 }
+
+void Client::handleQuitting() {
+    // Close the socket and perform any necessary cleanup
+    if (clientSocket != -1) {
+        close(clientSocket);
+        clientSocket = -1;
+    }
+    std::cout << "Client disconnected and resources cleaned up." << std::endl;
+}
+
+void Client::handleSelectingChatroom() {
+    std::string message;
+    std::getline(std::cin, message);
+    if (message.rfind("/create ", 0) == 0) {
+        std::string chatroomInfo = message.substr(8); // Extract chatroom info
+        sendMessage(Message(MessageType::CREATE, chatroomInfo));
+    } else if (message == "/quit") {
+        sendMessage(Message(MessageType::QUIT, ""));
+        state = ClientState::Quitting;
+    } else {
+        sendMessage(Message(MessageType::JOIN, message));
+    }
+}
+
+void Client::handleInChatroom() {
+    std::string message;
+    std::getline(std::cin, message);
+    if (message == "/leave") {
+        sendMessage(Message(MessageType::MENU, ""));
+    } else if (message == "/quit") {
+        sendMessage(Message(MessageType::QUIT, ""));
+        state = ClientState::Quitting;
+    } else {
+        sendMessage(Message(MessageType::POST, message));
+    }
+}
+
 
 void Client::waitForMessageReady() {
     std::unique_lock<std::mutex> lock(mtx);
