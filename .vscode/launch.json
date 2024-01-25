@@ -1,0 +1,63 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug myserver",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/Server/myserver",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/Server",
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build Server",
+      "miDebuggerPath": "/usr/bin/gdb"
+    },
+    {
+      "name": "Debug myclient",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/Client/myclient",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/Client",
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "miDebuggerPath": "gdb"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/home/gu/Desktop/Chatroom/Client",
+      "program": "/home/gu/Desktop/Chatroom/Client/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
