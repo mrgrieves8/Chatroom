@@ -216,7 +216,7 @@ void Server::handleUsernameRequest(int client_socket) {
 
         if (username.length() > 25) {
             sendMessage(client_socket, Message(MessageType::QUIT, "Username too long. Please reconnect with a shorter username."));
-        } else if (!isTakenUsername(username)) {
+        } else if (!isUsernameAvailable(username)) {
             sendMessage(client_socket, Message(MessageType::QUIT, "Username taken. Please reconnect with a different username."));
         } else {
             ClientInfo newClient;
@@ -535,7 +535,7 @@ std::string Server::findClientChatroom(int client_socket) {
 }
 
 
-bool Server::isTakenUsername(const std::string& username) {
+bool Server::isUsernameAvailable(const std::string& username) {
     // Check if username is already taken
     for (const auto& pair : clientUsernames) {
         if (pair.second.username == username) {
