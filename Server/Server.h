@@ -53,6 +53,8 @@ public:
     void run();
     std::string findClientChatroom(int client_socket);
 
+    bool isTakenUsername(const std::string &username);
+
 private:
     std::string ip;
     int port;
@@ -78,7 +80,6 @@ private:
     bool containsForbiddenWords(const std::string& chatroomName, const std::string& message);
     void handleNewConnection();
     void closeAllConnections();
-    bool isValidUsername(const std::string& username);
     void processJoinMessage(int client_socket, const Message& message);
     void processCreateChatroomMessage(int client_socket, const Message &message);
     void setForbiddenWords(const std::string &chatroomName, const std::string &words);

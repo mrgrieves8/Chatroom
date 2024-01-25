@@ -203,6 +203,11 @@ void Client::handleServerResponse() {
     std::getline(std::cin, username);
     sendMessage(Message(MessageType::LOGIN, username)); // Sending username to the server
 
-    Message chatroomOptions = receiveMessage();
-    std::cout << chatroomOptions.getBody(); // Displaying chatroom options
+    Message serverResponse = receiveMessage();
+    if (serverResponse.getType() == MessageType::QUIT) {
+        std::cerr << serverResponse.getBody() << std::endl;
+        handleQuitting();
+    } else {
+        std::cout << serverResponse.getBody(); // Displaying chatroom options or other messages
+    }
 }

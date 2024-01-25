@@ -214,19 +214,18 @@ void Server::handleUsernameRequest(int client_socket) {
         std::string username = usernameMessage.getBody();
         std::cout << "Received username: " << username << " from client: Socket FD " << client_socket << std::endl;
 
-        if (isValidUsername(username)) {
+        if (username.length() > 25) {
+            sendMessage(client_socket, Message(MessageType::QUIT, "Username too long. Please reconnect with a shorter username."));
+        } else if (!isTakenUsername(username)) {
+            sendMessage(client_socket, Message(MessageType::QUIT, "Username taken. Please reconnect with a different username."));
+        } else {
             ClientInfo newClient;
             newClient.username = username;
             newClient.socketNum = client_socket;
             clientUsernames[client_socket] = newClient;
             std::cout << "Username '" << username << "' is valid and assigned to client: Socket FD " << client_socket << std::endl;
             displayMenu(client_socket);
-        } else {
-            std::cerr << "Invalid username '" << username << "' received from client: Socket FD " << client_socket << std::endl;
-            Message loginFailMsg(MessageType::POST, "Login failed: Invalid username.");
-            sendMessage(client_socket, loginFailMsg);
-            std::cout << "Invalid username message sent, closing connection for client: Socket FD " << client_socket << std::endl;
-            close(client_socket); // Close the connection if login fails
+            return; // Continue with the normal flow
         }
     } else {
         if (bytesRead == -1) {
@@ -234,10 +233,12 @@ void Server::handleUsernameRequest(int client_socket) {
         } else {
             std::cerr << "Client: Socket FD " << client_socket << " closed the connection." << std::endl;
         }
-        // Handle error or disconnection
-        close(client_socket);
     }
+    
+    // Close the connection if the username is invalid or if an error occurred
+    close(client_socket);
 }
+
 
 
 
@@ -524,11 +525,7 @@ std::string Server::findClientChatroom(int client_socket) {
 }
 
 
-bool Server::isValidUsername(const std::string& username) {
-    if (username.length() > 25) {
-        return false;
-    }
-
+bool Server::isTakenUsername(const std::string& username) {
     // Check if username is already taken
     for (const auto& pair : clientUsernames) {
         if (pair.second.username == username) {
