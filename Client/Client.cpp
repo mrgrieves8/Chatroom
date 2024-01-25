@@ -8,8 +8,7 @@
 #include <thread>
 #include "../common/Message.h"
 #include <atomic>
-#include <condition_variable>
-#include <mutex>
+
 
 
 Client::Client(const std::string& serverIP, int serverPort)
@@ -53,22 +52,21 @@ void Client::startReceivingMessages() {
             Message response = receiveMessage();
             switch (response.getType()) {
                 case MessageType::JOIN:
-                    std::cout << "got join" << std::endl;
                     state = ClientState::InChatroom;
                     std::cout << response.getBody() << std::endl;
+                    notifyReadyToSend();
                     break;
                 case MessageType::LEAVE:
-                    std::cout << "got leave" << std::endl;
                     state = ClientState::SelectingChatroom;
                     std::cout << response.getBody() << std::endl;
+                    notifyReadyToSend();
                     break;
                 case MessageType::QUIT:
-                    std::cout << "got quit" << std::endl;
                     std::cerr << "Connection closed." << std::endl;
                     return; // Exiting the thread
                 case MessageType::POST:
-                    std::cout << "got post" << std::endl;
                     std::cout << response.getBody() << std::endl;
+                    notifyReadyToSend();
                     break;
                 default:
                     std::cerr << "Unknown message type received." << std::endl;
@@ -76,8 +74,13 @@ void Client::startReceivingMessages() {
             }
         }
     });
+    receiveThread.detach();
+}
 
-    receiveThread.detach(); // Detach the thread to run independently
+void Client::notifyReadyToSend() {
+    std::lock_guard<std::mutex> lock(mtx);
+    readyToSend = true;
+    cv.notify_one();
 }
 
 void Client::startChatSession() {
@@ -85,41 +88,40 @@ void Client::startChatSession() {
         std::cerr << "Failed to connect to server." << std::endl;
         return;
     }
-    
+    startReceivingMessages();
     if (state == ClientState::PreLogin) {
         handleServerResponse(); // Handle initial setup like username
-        std::lock_guard<std::mutex> lock(stateMutex);
         state = ClientState::SelectingChatroom;
     }
-    startReceivingMessages(); // Start the message receiving thread
 
     std::string message;
     while (true) {
-
-        std::unique_lock<std::mutex> lock(stateMutex);
-        stateCondition.wait(lock, [this] { return state != ClientState::PreLogin; }); 
-        
+        waitForMessageReady();
         if (state == ClientState::SelectingChatroom) {
-
             std::getline(std::cin, message);
             sendMessage(Message(MessageType::JOIN, message));
-
         } else if (state == ClientState::InChatroom) {
-            
             std::getline(std::cin, message);
             if (message == "/leave") {
-            
                 sendMessage(Message(MessageType::LEAVE, ""));
-                state = ClientState::SelectingChatroom;
-            
             } else {
-            
                 sendMessage(Message(MessageType::POST, message));
-            
             }
         }
+        setNotReadyToSend();
     }
 }
+
+void Client::waitForMessageReady() {
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock, [this]{ return readyToSend; });
+}
+
+void Client::setNotReadyToSend() {
+    std::lock_guard<std::mutex> lock(mtx);
+    readyToSend = false;
+}
+
 
 void Client::sendMessage(const Message& message) {
     std::string serializedMessage = message.serialize();
@@ -141,8 +143,8 @@ Message Client::receiveMessage() {
 }
 
 void Client::handleServerResponse() {
-    Message welcomeMessage = receiveMessage();
-    std::cout << welcomeMessage.getBody() << std::endl; // Displaying the welcome message
+    // Message welcomeMessage = receiveMessage();
+    // std::cout << welcomeMessage.getBody() << std::endl; // Displaying the welcome message
 
     // Getting username from the user
     std::string username;

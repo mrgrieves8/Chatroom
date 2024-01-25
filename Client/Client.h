@@ -5,7 +5,7 @@
 #include "../common/Message.h"
 #include <atomic>
 #include <condition_variable>
-#include <mutex>
+
 
 
 class Client {
@@ -29,11 +29,15 @@ private:
     int clientSocket;
     bool isConnected;
     void startReceivingMessages();
+    void notifyReadyToSend();
+    void waitForMessageReady();
+    void setNotReadyToSend();
     void handleServerResponse();
     void displayChatInterface();
     std::atomic<ClientState> state;
-    std::mutex stateMutex;
-    std::condition_variable stateCondition;
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool readyToSend = false;
 
 
     // Add other private methods as necessary
