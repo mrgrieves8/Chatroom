@@ -13,14 +13,18 @@ public:
     enum class ClientState {
         PreLogin,
         SelectingChatroom,
-        InChatroom
+        InChatroom,
+        Quitting
     };
 
     Client(const std::string& serverIP, int serverPort);
     virtual ~Client();
     bool connectToServer();
     void startChatSession();
-    void sendMessage(const Message& message);
+    void handleQuitting();
+    void handleSelectingChatroom();
+    void handleInChatroom();
+    void sendMessage(const Message &message);
     Message receiveMessage();
 
 private:

@@ -258,7 +258,7 @@ void Server::handleClientData(int client_socket) {
 
         // Remove client information
         clientUsernames.erase(client_socket);
-        removeFromChatroomMapping(client_socket);
+        leaveChatroom(client_socket);
         return;
     }
 
@@ -285,6 +285,7 @@ void Server::displayMenu(int client_socket) {
 
 void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     chatrooms[chatroomName].clients.insert(client_socket);
+    clientToChatroomMap[client_socket] = chatroomName;
     std::cout << "Socket FD " << client_socket << " has joined room " << chatroomName << std::endl;
 
     // Message joinConfirmMsg(MessageType::JOIN,  "\n");
@@ -359,7 +360,7 @@ void Server::processClientMessage(int client_socket, const std::string& serializ
             processMenuMessage(client_socket, message);
             break;
         case MessageType::QUIT:
-            processQuitMessage(client_socket, message);
+            handleClientDisconnect(client_socket);
             break;
         case MessageType::POST:
             processPostMessage(client_socket, message);
@@ -428,16 +429,11 @@ void Server::setForbiddenWords(const std::string& chatroomName, const std::strin
 // MENU
 void Server::processMenuMessage(int client_socket, const Message& message) {
     std::string currentChatroom = findClientChatroom(client_socket);
+    std::cout << "[DEBUG] Processing menu message for client " << client_socket << ". In chatroom: " << currentChatroom << std::endl; 
+    
     if (!currentChatroom.empty()) {
-        chatrooms[currentChatroom].clients.erase(client_socket);
-        removeFromChatroomMapping(client_socket);
-        std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + currentChatroom;
-        // Message leaveMessage(MessageType::MENU, leaveMsg);
-        // sendMessage(client_socket, leaveMessage);
         displayMenu(client_socket);
-        Message logLeaveMessage(MessageType::POST, leaveMsg);
-        broadcastMessage(currentChatroom, logLeaveMessage);
-        
+        leaveChatroom(client_socket);
     } else {
         Message notInChatroomMessage(MessageType::POST, "You are not currently in a chatroom.");
         sendMessage(client_socket, notInChatroomMessage);
@@ -447,11 +443,13 @@ void Server::processMenuMessage(int client_socket, const Message& message) {
 
 // QUIT
 void Server::processQuitMessage(int client_socket, const Message& message) {
-    // Implementation of quit logic
-    // Close the connection with the client
-    close(client_socket);
-}
+    std::string currentChatroom = findClientChatroom(client_socket);
+    if (!currentChatroom.empty()) {
+        leaveChatroom(client_socket);
+    }
 
+    closeClientConnection(client_socket);
+}
 
 // POST
 void Server::processPostMessage(int client_socket, const Message& message) {
@@ -468,36 +466,46 @@ void Server::processPostMessage(int client_socket, const Message& message) {
 
 
 
-void Server::removeFromChatroomMapping(int client_socket) {
+void Server::leaveChatroom(int client_socket) {
+    // Find the chatroom that the client is in
+
     auto it = clientToChatroomMap.find(client_socket);
     if (it != clientToChatroomMap.end()) {
-        // If the client is in the map, remove them.
+        const std::string& chatroomName = it->second;
+        auto& chatroom = chatrooms[chatroomName];
+
+        // Remove the client from the chatroom's client list
+        chatroom.clients.erase(client_socket);
+
+        // Erase the client from the clientToChatroomMap
         clientToChatroomMap.erase(it);
+
+        // Broadcast a message that the client has left the chatroom
+        std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + chatroomName;
+        Message leaveMessage(MessageType::POST, leaveMsg);
+        std::cout << "[DEBUG] Broadcasting leave message for client " << client_socket << " in chatroom " << chatroomName << std::endl;
+        broadcastMessage(chatroomName, leaveMessage);
+        
+        std::cout << "Client " << client_socket << " has left the chatroom: " << chatroomName << std::endl;
     }
 }
 
 
 void Server::handleClientDisconnect(int client_socket) {
     std::string chatroomName = findClientChatroom(client_socket);
+    std::cout << "[DEBUG] Handling client disconnect for client " << client_socket << ". In chatroom: " << chatroomName << std::endl;
     if (!chatroomName.empty()) {
-        // Remove the client from the chatroom
-        chatrooms[chatroomName].clients.erase(client_socket);
-
-        // Create a message indicating that the client has left the chatroom
-        std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + chatroomName;
-        Message leaveMessage(MessageType::MENU, leaveMsg);
-
-        // Broadcast the leave message to other clients in the chatroom
-        broadcastMessage(chatroomName, leaveMessage);
-
-        // Remove client from the mapping
-        removeFromChatroomMapping(client_socket);
+        leaveChatroom(client_socket);
     }
-
-    // Remove client info
-    clientUsernames.erase(client_socket);
+    closeClientConnection(client_socket);
 }
 
+
+void Server::closeClientConnection(int client_socket) {
+    std::cout << "Closing Socket FD " << client_socket << std::endl;
+    close(client_socket);
+    clientUsernames.erase(client_socket);
+}
 
 std::string Server::findClientChatroom(int client_socket) {
     // Iterate through all chatrooms

@@ -73,7 +73,8 @@ private:
     void joinChatroom(int client_socket, const std::string& chatroomName);
     void broadcastMessage(const std::string& chatroomName, const Message& message);
     void handleClientDisconnect(int client_socket);
-    void removeFromChatroomMapping(int client_socket);
+    void closeClientConnection(int client_socket);
+    void leaveChatroom(int client_socket);
     bool containsForbiddenWords(const std::string& chatroomName, const std::string& message);
     void handleNewConnection();
     void closeAllConnections();
