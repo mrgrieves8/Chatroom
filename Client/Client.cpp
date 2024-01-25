@@ -56,7 +56,7 @@ void Client::startReceivingMessages() {
                     std::cout << response.getBody() << std::endl;
                     notifyReadyToSend();
                     break;
-                case MessageType::LEAVE:
+                case MessageType::MENU:
                     state = ClientState::SelectingChatroom;
                     std::cout << response.getBody() << std::endl;
                     notifyReadyToSend();
@@ -103,7 +103,7 @@ void Client::startChatSession() {
         } else if (state == ClientState::InChatroom) {
             std::getline(std::cin, message);
             if (message == "/leave") {
-                sendMessage(Message(MessageType::LEAVE, ""));
+                sendMessage(Message(MessageType::MENU, ""));
             } else {
                 sendMessage(Message(MessageType::POST, message));
             }
