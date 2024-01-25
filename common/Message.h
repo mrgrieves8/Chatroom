@@ -6,7 +6,7 @@
 
 enum class MessageType {
     JOIN,
-    LEAVE,
+    MENU,
     QUIT,
     POST,
     LOGIN

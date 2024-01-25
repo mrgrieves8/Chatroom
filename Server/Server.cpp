@@ -276,7 +276,7 @@ void Server::displayMenu(int client_socket) {
     }
     menu << "Enter a chatroom name to join or create a new one:\n";
 
-    Message menuMessage(MessageType::LEAVE, menu.str());
+    Message menuMessage(MessageType::MENU, menu.str());
     sendMessage(client_socket, menuMessage);
     std::cout << "Menu displayed to client: Socket FD " << client_socket << std::endl;
 }
@@ -335,7 +335,7 @@ void Server::processClientMessage(int client_socket, const std::string& serializ
         case MessageType::JOIN:
             processJoinMessage(client_socket, message);
             break;
-        case MessageType::LEAVE:
+        case MessageType::MENU:
             processLeaveMessage(client_socket, message);
             break;
         case MessageType::QUIT:
@@ -373,14 +373,14 @@ void Server::processJoinMessage(int client_socket, const Message& message) {
 }
 
 
-// LEAVE
+// MENU
 void Server::processLeaveMessage(int client_socket, const Message& message) {
     std::string currentChatroom = findClientChatroom(client_socket);
     if (!currentChatroom.empty()) {
         chatrooms[currentChatroom].clients.erase(client_socket);
         removeFromChatroomMapping(client_socket);
         std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + currentChatroom;
-        // Message leaveMessage(MessageType::LEAVE, leaveMsg);
+        // Message leaveMessage(MessageType::MENU, leaveMsg);
         // sendMessage(client_socket, leaveMessage);
         displayMenu(client_socket);
         Message logLeaveMessage(MessageType::POST, leaveMsg);
@@ -433,7 +433,7 @@ void Server::handleClientDisconnect(int client_socket) {
 
         // Create a message indicating that the client has left the chatroom
         std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + chatroomName;
-        Message leaveMessage(MessageType::LEAVE, leaveMsg);
+        Message leaveMessage(MessageType::MENU, leaveMsg);
 
         // Broadcast the leave message to other clients in the chatroom
         broadcastMessage(chatroomName, leaveMessage);
