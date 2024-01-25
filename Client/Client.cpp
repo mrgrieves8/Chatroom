@@ -143,9 +143,6 @@ Message Client::receiveMessage() {
 }
 
 void Client::handleServerResponse() {
-    // Message welcomeMessage = receiveMessage();
-    // std::cout << welcomeMessage.getBody() << std::endl; // Displaying the welcome message
-
     // Getting username from the user
     std::string username;
     std::getline(std::cin, username);
