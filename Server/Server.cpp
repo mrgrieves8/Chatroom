@@ -182,13 +182,18 @@ void Server::sendWelcomeMessage(int client_socket) {
 }
 
 void Server::createChatroom(const std::string& name) {
-    // Implementation logic
+    // Check if the chatroom does not already exist
     if (chatrooms.find(name) == chatrooms.end()) {
         Chatroom newChatroom;
         newChatroom.name = name;
-        // Initialize other members if necessary
+
+        // Add a default message to the chatroom's history
+        std::string welcomeMessage = "[Server]: Welcome to the chatroom '" + name + "'.\nYou can send messages to the chat now. Type '/leave' to exit the chatroom.";
+        newChatroom.messages.push_back(welcomeMessage);
+
+        // Save the new chatroom
         chatrooms[name] = newChatroom;
-        std::cout << "Chatroom '" << name << "' created successfully." << std::endl;
+        std::cout << "Chatroom '" << name << "' created successfully with welcome message." << std::endl;
     } else {
         std::cout << "Chatroom '" << name << "' already exists." << std::endl;
     }
@@ -280,17 +285,18 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     chatrooms[chatroomName].clients.insert(client_socket);
     std::cout << "Socket FD " << client_socket << " has joined room " << chatroomName << std::endl;
 
+    Message joinConfirmMsg(MessageType::JOIN, "Joined chatroom: " + chatroomName);
+    sendMessage(client_socket, joinConfirmMsg);
+    
     // Build the chat history as a single string
     std::stringstream chatHistory;
-    for (const std::string& serializedMessage : chatrooms[chatroomName].messages) {
-        Message message = Message::deserialize(serializedMessage);
-        chatHistory << message.getBody() << "\n";
+    for (const std::string& messageBody : chatrooms[chatroomName].messages) {
+        chatHistory << messageBody << "\n";  // Add each message to the stream
     }
 
-    // Send the chat history as one message
+    // Send the chat history as one POST message
     if (!chatHistory.str().empty()) {
         Message historyMessage(MessageType::POST, chatHistory.str());
-        std::cout << chatHistory << std::endl;
         sendMessage(client_socket, historyMessage);
     }
 }
@@ -352,16 +358,22 @@ void Server::processJoinMessage(int client_socket, const Message& message) {
     if (!findClientChatroom(client_socket).empty() && findClientChatroom(client_socket) != chatroomName) {
         Message alreadyInMsg(MessageType::POST, "You are already in chatroom " + findClientChatroom(client_socket) + ". Please leave it first.");
         sendMessage(client_socket, alreadyInMsg);
-    } else if (chatrooms.find(chatroomName) != chatrooms.end()) {
-        joinChatroom(client_socket, chatroomName);
-        std::string joinMsg = "[" + clientUsernames[client_socket].username + "] has joined " + chatroomName;
-        Message joinMessage(MessageType::JOIN, joinMsg);
-        broadcastMessage(chatroomName, joinMessage);
     } else {
-        Message errorMsg(MessageType::POST, "Chatroom '" + chatroomName + "' does not exist.");
-        sendMessage(client_socket, errorMsg);
+        if (chatrooms.find(chatroomName) != chatrooms.end()) {
+            joinChatroom(client_socket, chatroomName);
+            std::string joinMsg = "[" + clientUsernames[client_socket].username + "] has joined " + chatroomName;
+            
+            
+            Message joinMessage(MessageType::POST, joinMsg);
+            broadcastMessage(chatroomName, joinMessage);
+
+        } else {
+            Message errorMsg(MessageType::POST, "Chatroom '" + chatroomName + "' does not exist.");
+            sendMessage(client_socket, errorMsg);
+        }
     }
 }
+
 
 // LEAVE
 void Server::processLeaveMessage(int client_socket, const Message& message) {
@@ -372,7 +384,8 @@ void Server::processLeaveMessage(int client_socket, const Message& message) {
         std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + currentChatroom;
         Message leaveMessage(MessageType::LEAVE, leaveMsg);
         sendMessage(client_socket, leaveMessage);
-        broadcastMessage(currentChatroom, leaveMessage);
+        Message logLeaveMessage(MessageType::POST, leaveMsg);
+        broadcastMessage(currentChatroom, logLeaveMessage);
         displayMenu(client_socket);
     } else {
         Message notInChatroomMessage(MessageType::POST, "You are not currently in a chatroom.");

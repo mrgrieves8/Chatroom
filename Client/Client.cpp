@@ -95,18 +95,27 @@ void Client::startChatSession() {
 
     std::string message;
     while (true) {
+
         std::unique_lock<std::mutex> lock(stateMutex);
-        stateCondition.wait(lock, [this] { return state != ClientState::PreLogin; }); // Wait for the state to change
+        stateCondition.wait(lock, [this] { return state != ClientState::PreLogin; }); 
+        
         if (state == ClientState::SelectingChatroom) {
+
             std::getline(std::cin, message);
             sendMessage(Message(MessageType::JOIN, message));
+
         } else if (state == ClientState::InChatroom) {
+            
             std::getline(std::cin, message);
             if (message == "/leave") {
+            
                 sendMessage(Message(MessageType::LEAVE, ""));
                 state = ClientState::SelectingChatroom;
+            
             } else {
+            
                 sendMessage(Message(MessageType::POST, message));
+            
             }
         }
     }
@@ -120,16 +129,16 @@ void Client::sendMessage(const Message& message) {
 Message Client::receiveMessage() {
     char buffer[1024] = {0};
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
-    
+
     if (bytesReceived <= 0) {
+        std::cout << "Connection error or server closed the connection" << std::endl;
         return Message(MessageType::QUIT, "Connection error or server closed the connection");
     }
-
+    
     std::string receivedData(buffer, bytesReceived);
-
-    return Message::deserialize(receivedData);
+    Message deserializedMessage = Message::deserialize(receivedData);
+    return deserializedMessage;
 }
-
 
 void Client::handleServerResponse() {
     Message welcomeMessage = receiveMessage();
