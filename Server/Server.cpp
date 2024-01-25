@@ -274,13 +274,14 @@ void Server::displayMenu(int client_socket) {
     for (const auto& pair : chatrooms) {
         menu << pair.first << "\n"; // Chatroom name
     }
-    menu << "Enter a chatroom name to join or create a new one:\n";
+    menu << "Enter a chatroom name to join or create a new one.\n";
+    menu << "To create a new chatroom, type '/create [chatroom name];[forbidden words]'\n";
+    menu << "Example: /create myRoom;word1,word2\n";
 
     Message menuMessage(MessageType::MENU, menu.str());
     sendMessage(client_socket, menuMessage);
     std::cout << "Menu displayed to client: Socket FD " << client_socket << std::endl;
 }
-
 
 void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     chatrooms[chatroomName].clients.insert(client_socket);
@@ -304,17 +305,33 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
 
 
 void Server::broadcastMessage(const std::string& chatroomName, const Message& message) {
-    std::string serializedMessage = message.getBody();
-    
-    // Send the message to all clients in the chatroom
+    // Replace forbidden words
+    std::string modifiedMessageBody = replaceForbiddenWords(message.getBody(), chatrooms[chatroomName].forbiddenWords);
+
+    // Broadcast modified message
+    Message modifiedMessage(message.getType(), modifiedMessageBody);
     for (int client_socket : chatrooms[chatroomName].clients) {
-        sendMessage(client_socket, message);
+        sendMessage(client_socket, modifiedMessage);
     }
 
-    // Append the serialized message to the chat history
-    chatrooms[chatroomName].messages.push_back(serializedMessage);
+    // Add to chat history
+    chatrooms[chatroomName].messages.push_back(modifiedMessageBody);
 }
 
+
+std::string replaceForbiddenWords(const std::string& messageBody, const std::set<std::string>& forbiddenWords) {
+    std::string modifiedMessage = messageBody;
+
+    for (const auto& word : forbiddenWords) {
+        std::size_t found = modifiedMessage.find(word);
+        while (found != std::string::npos) {
+            modifiedMessage.replace(found, word.length(), "***");
+            found = modifiedMessage.find(word, found + 3);
+        }
+    }
+
+    return modifiedMessage;
+}
 
 
 void Server::sendMessage(int client_socket, const Message& message) {
@@ -335,8 +352,11 @@ void Server::processClientMessage(int client_socket, const std::string& serializ
         case MessageType::JOIN:
             processJoinMessage(client_socket, message);
             break;
+        case MessageType::CREATE:
+            processCreateChatroomMessage(client_socket, message);
+            break;
         case MessageType::MENU:
-            processLeaveMessage(client_socket, message);
+            processMenuMessage(client_socket, message);
             break;
         case MessageType::QUIT:
             processQuitMessage(client_socket, message);
@@ -373,8 +393,40 @@ void Server::processJoinMessage(int client_socket, const Message& message) {
 }
 
 
+void Server::processCreateChatroomMessage(int client_socket, const Message& message) {
+    std::string chatroomInfo = message.getBody();
+    std::istringstream ss(chatroomInfo);
+    std::string chatroomName;
+    std::getline(ss, chatroomName, ';');
+
+    if (chatrooms.find(chatroomName) == chatrooms.end()) {
+        createChatroom(chatroomName);
+        chatrooms[chatroomName].setAdmin(client_socket);
+
+        std::string forbiddenWords;
+        std::getline(ss, forbiddenWords);
+        setForbiddenWords(chatroomName, forbiddenWords);
+
+        joinChatroom(client_socket, chatroomName); // Automatically join the creator to the chatroom
+        std::cout << "New chatroom '" << chatroomName << "' created and forbidden words set by client: " << client_socket << std::endl;
+    } else {
+        Message errorMsg(MessageType::POST, "Chatroom '" + chatroomName + "' already exists.");
+        sendMessage(client_socket, errorMsg);
+    }
+}
+
+
+void Server::setForbiddenWords(const std::string& chatroomName, const std::string& words) {
+    std::istringstream wordsStream(words);
+    std::string word;
+    while (std::getline(wordsStream, word, ',')) {
+        chatrooms[chatroomName].addForbiddenWord(word);
+    }
+}
+
+
 // MENU
-void Server::processLeaveMessage(int client_socket, const Message& message) {
+void Server::processMenuMessage(int client_socket, const Message& message) {
     std::string currentChatroom = findClientChatroom(client_socket);
     if (!currentChatroom.empty()) {
         chatrooms[currentChatroom].clients.erase(client_socket);

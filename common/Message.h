@@ -9,7 +9,8 @@ enum class MessageType {
     MENU,
     QUIT,
     POST,
-    LOGIN
+    LOGIN,
+    CREATE
 };
 
 class Message {

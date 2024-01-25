@@ -96,10 +96,16 @@ void Client::startChatSession() {
 
     std::string message;
     while (true) {
-        waitForMessageReady();
+    waitForMessageReady();
         if (state == ClientState::SelectingChatroom) {
             std::getline(std::cin, message);
-            sendMessage(Message(MessageType::JOIN, message));
+            if (message.rfind("/create ", 0) == 0) {
+                // Extracting chatroom info from the command
+                std::string chatroomInfo = message.substr(8); // Assuming command is "/create "
+                sendMessage(Message(MessageType::CREATE, chatroomInfo));
+            } else {
+                sendMessage(Message(MessageType::JOIN, message));
+            }
         } else if (state == ClientState::InChatroom) {
             std::getline(std::cin, message);
             if (message == "/leave") {
@@ -110,6 +116,7 @@ void Client::startChatSession() {
         }
         setNotReadyToSend();
     }
+
 }
 
 void Client::waitForMessageReady() {
