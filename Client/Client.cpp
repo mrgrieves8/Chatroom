@@ -8,6 +8,7 @@
 #include <thread>
 #include "../common/Message.h"
 #include <atomic>
+#include <termios.h>
 
 
 
@@ -52,11 +53,13 @@ void Client::startReceivingMessages() {
             Message response = receiveMessage();
             switch (response.getType()) {
                 case MessageType::JOIN:
+                    system("clear");
                     state = ClientState::InChatroom;
                     std::cout << response.getBody() << std::endl;
                     notifyReadyToSend();
                     break;
                 case MessageType::MENU:
+                    system("clear");
                     state = ClientState::SelectingChatroom;
                     std::cout << response.getBody() << std::endl;
                     notifyReadyToSend();
@@ -95,6 +98,7 @@ void Client::startChatSession() {
         handleServerResponse(); // Handle initial setup like username
         state = ClientState::SelectingChatroom;
     }
+    
 
     while (state != ClientState::Quitting) {
         waitForMessageReady();
@@ -141,9 +145,18 @@ void Client::handleSelectingChatroom() {
     }
 }
 
+// Function to read input line with echo, then clear the line after sending
+std::string getInputAndClearLine() {
+    std::string input;
+    std::getline(std::cin, input); // Echoes the input as usual
+
+    // Move the cursor up one line and clear the line
+    std::cout << "\033[A\033[2K";
+    return input;
+}
+
 void Client::handleInChatroom() {
-    std::string message;
-    std::getline(std::cin, message);
+    std::string message = getInputAndClearLine();
     if (message == "/leave") {
         sendMessage(Message(MessageType::MENU, ""));
     } else if (message == "/quit") {
@@ -153,7 +166,6 @@ void Client::handleInChatroom() {
         sendMessage(Message(MessageType::POST, message));
     }
 }
-
 
 void Client::waitForMessageReady() {
     std::unique_lock<std::mutex> lock(mtx);

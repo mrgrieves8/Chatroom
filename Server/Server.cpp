@@ -272,7 +272,7 @@ void Server::displayMenu(int client_socket) {
     std::stringstream menu;
     menu << "\nAvailable chatrooms:\n";
     for (const auto& pair : chatrooms) {
-        menu << pair.first << "\n"; // Chatroom name
+        menu << "---- " << pair.first << "\n"; // Chatroom name
     }
     menu << "Enter a chatroom name to join or create a new one.\n";
     menu << "To create a new chatroom, type '/create [chatroom name];[forbidden words]'\n";
