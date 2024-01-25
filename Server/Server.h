@@ -79,7 +79,9 @@ private:
     void closeAllConnections();
     bool isValidUsername(const std::string& username);
     void processJoinMessage(int client_socket, const Message& message);
-    void processLeaveMessage(int client_socket, const Message& message);
+    void processCreateChatroomMessage(int client_socket, const Message &message);
+    void setForbiddenWords(const std::string &chatroomName, const std::string &words);
+    void processMenuMessage(int client_socket, const Message &message);
     void processQuitMessage(int client_socket, const Message& message);
     void processPostMessage(int client_socket, const Message& message);
     void sendMessage(int client_socket, const Message& message);
@@ -87,3 +89,5 @@ private:
 };
 
 #endif // SERVER_H
+
+std::string replaceForbiddenWords(const std::string &messageBody, const std::set<std::string> &forbiddenWords);
