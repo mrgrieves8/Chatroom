@@ -176,7 +176,7 @@ void Server::closeAllConnections() {
 }
 
 void Server::sendWelcomeMessage(int client_socket) {
-    Message welcomeMessage(MessageType::POST, "Welcome to the chat server!\nPlease enter username:\n");
+    Message welcomeMessage(MessageType::POST, "Welcome to the chat server!\nPlease enter username:");
     sendMessage(client_socket, welcomeMessage);
     std::cout << "Welcome message sent to client: Socket FD " << client_socket << std::endl;
 }
@@ -188,7 +188,8 @@ void Server::createChatroom(const std::string& name) {
         newChatroom.name = name;
 
         // Add a default message to the chatroom's history
-        std::string welcomeMessage = "[Server]: Welcome to the chatroom '" + name + "'.\nYou can send messages to the chat now. Type '/leave' to exit the chatroom.";
+        std::string welcomeMessage = "[Server]: Welcome to the chatroom '" + name + 
+        "'.\nYou can send messages to the chat now.\nType '/leave' to exit the chatroom.";
         newChatroom.messages.push_back(welcomeMessage);
 
         // Save the new chatroom
@@ -285,7 +286,7 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     chatrooms[chatroomName].clients.insert(client_socket);
     std::cout << "Socket FD " << client_socket << " has joined room " << chatroomName << std::endl;
 
-    Message joinConfirmMsg(MessageType::JOIN, "Joined chatroom: " + chatroomName);
+    Message joinConfirmMsg(MessageType::JOIN,  "\n");
     sendMessage(client_socket, joinConfirmMsg);
     
     // Build the chat history as a single string
@@ -318,7 +319,7 @@ void Server::broadcastMessage(const std::string& chatroomName, const Message& me
 
 
 void Server::sendMessage(int client_socket, const Message& message) {
-    std::string serializedMessage = message.serialize() + "\n";
+    std::string serializedMessage = message.serialize();
     send(client_socket, serializedMessage.c_str(), serializedMessage.length(), 0);
 }
 
