@@ -124,6 +124,7 @@ void Client::startChatSession() {
 
 void Client::handleQuitting() {
     // Close the socket and perform any necessary cleanup
+    
     if (clientSocket != -1) {
         close(clientSocket);
         clientSocket = -1;
@@ -138,6 +139,7 @@ void Client::handleSelectingChatroom() {
         std::string chatroomInfo = message.substr(8); // Extract chatroom info
         sendMessage(Message(MessageType::CREATE, chatroomInfo));
     } else if (message == "/quit") {
+        system("clear");
         sendMessage(Message(MessageType::QUIT, ""));
         state = ClientState::Quitting;
     } else {
@@ -160,6 +162,7 @@ void Client::handleInChatroom() {
     if (message == "/leave") {
         sendMessage(Message(MessageType::MENU, ""));
     } else if (message == "/quit") {
+        system("clear");
         sendMessage(Message(MessageType::QUIT, ""));
         state = ClientState::Quitting;
     } else {
@@ -202,12 +205,13 @@ void Client::handleServerResponse() {
     std::string username;
     std::getline(std::cin, username);
     sendMessage(Message(MessageType::LOGIN, username)); // Sending username to the server
-
+    
     Message serverResponse = receiveMessage();
     if (serverResponse.getType() == MessageType::QUIT) {
         std::cerr << serverResponse.getBody() << std::endl;
         handleQuitting();
     } else {
+        system("clear");
         std::cout << serverResponse.getBody(); // Displaying chatroom options or other messages
     }
 }

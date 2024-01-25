@@ -271,14 +271,24 @@ void Server::handleClientData(int client_socket) {
 
 void Server::displayMenu(int client_socket) {
     std::stringstream menu;
-    menu << "\nAvailable chatrooms:\n";
+    // Greeting with username
+    menu << "Hello " << clientUsernames[client_socket].username << "!\n\n";
+
+    // Displaying available chatrooms
+    menu << "Available chatrooms:\n";
     for (const auto& pair : chatrooms) {
         menu << "---- " << pair.first << "\n"; // Chatroom name
     }
-    menu << "Enter a chatroom name to join or create a new one.\n";
-    menu << "To create a new chatroom, type '/create [chatroom name];[forbidden words]'\n";
-    menu << "Example: /create myRoom;word1,word2\n";
 
+    // Instructions for joining and creating chatrooms
+    menu << "\nTo enter a chatroom, type its name and press Enter.\n";
+    menu << "To create a new chatroom, use the command:\n\t /create [chatroom name];[forbidden words]\n";
+    menu << "\nExample: /create myRoom;word1,word2\n";
+
+    // Note about quitting
+    menu << "\nAt any time, use /quit to exit the chat server.\n";
+
+    // Send the formatted menu to the client
     Message menuMessage(MessageType::MENU, menu.str());
     sendMessage(client_socket, menuMessage);
     std::cout << "Menu displayed to client: Socket FD " << client_socket << std::endl;
