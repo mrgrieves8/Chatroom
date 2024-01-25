@@ -48,3 +48,5 @@ private:
 };
 
 #endif // CLIENT_H
+
+std::string getInputAndClearLine();
