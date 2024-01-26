@@ -48,7 +48,7 @@ bool Server::init() {
     std::cout << "Server initialization successful." << std::endl;
 
     // Use the createChatroom method to initialize the default chatroom
-    createChatroom("default");
+    createChatroom("defaultChat");
     std::cout << "Default chatroom created." << std::endl;
 
     return true;
@@ -274,7 +274,9 @@ void Server::handleClientData(int client_socket) {
 void Server::displayMenu(int client_socket) {
     std::stringstream menu;
     // Greeting with username
-    menu << "Hello " << clientUsernames[client_socket].username << "!\n\n";
+    menu << "Hello " << clientUsernames[client_socket].username << "!\n";
+    // Note about quitting
+    menu << "At any time, use /quit to exit the chat server.\n\n";
 
     // Displaying available chatrooms
     menu << "Available chatrooms:\n";
@@ -287,9 +289,7 @@ void Server::displayMenu(int client_socket) {
     menu << "To create a new chatroom, use the command:\n\t /create [chatroom name];[forbidden words]\n";
     menu << "\nExample: /create myRoom;word1,word2\n";
 
-    // Note about quitting
-    menu << "\nAt any time, use /quit to exit the chat server.\n";
-
+    
     // Send the formatted menu to the client
     Message menuMessage(MessageType::MENU, menu.str());
     sendMessage(client_socket, menuMessage);

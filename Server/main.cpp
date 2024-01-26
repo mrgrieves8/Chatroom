@@ -6,7 +6,7 @@ using namespace std;
 
 int main() {
     string serverIP = "127.0.0.1";
-    int serverPort = 50000;
+    int serverPort = 54000;
     Server server(serverIP, serverPort);
 
     if (server.init()) {

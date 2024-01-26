@@ -1,5 +1,3 @@
-# Define the server target
-add_executable(Server main.cpp Server.cpp)
+add_executable(Server main.cpp Server.cpp ../common/Message.cpp)
 
-# Include directories
-target_include_directories(Server PRIVATE ${PROJECT_SOURCE_DIR}/Server)
+target_include_directories(Server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ../common)

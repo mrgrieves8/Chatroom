@@ -3,8 +3,8 @@
 #include <string>
 
 int main() {
-    std::string serverIP = "127.0.0.1"; // Change this to your server's IP
-    int serverPort = 50000;             // Change this to your server's port
+    std::string serverIP = "127.0.0.1"; 
+    int serverPort = 54000;           
 
     Client client(serverIP, serverPort);
 
