@@ -102,14 +102,15 @@ bool Server::initEpoll() {
     return true;
 }
 
-
 // Signal handler for graceful shutdown
 std::atomic<bool> running(true);
+
 
 void signalHandler(int signum) {
     std::cout << "\nInterrupt signal (" << signum << ") received. Shutting down..." << std::endl;
     running = false;
 }
+
 
 void Server::run() {
     std::cout << "Server is now running..." << std::endl;
@@ -143,6 +144,7 @@ void Server::run() {
     std::cout << "Server shutdown complete." << std::endl;
 }
 
+
 void Server::handleNewConnection() {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -175,11 +177,13 @@ void Server::closeAllConnections() {
     close(epoll_fd);   // Close the epoll file descriptor
 }
 
+
 void Server::sendWelcomeMessage(int client_socket) {
     Message welcomeMessage(MessageType::POST, "Welcome to the chat server!\nPlease enter username:");
     sendMessage(client_socket, welcomeMessage);
     std::cout << "Welcome message sent to client: Socket FD " << client_socket << std::endl;
 }
+
 
 void Server::createChatroom(const std::string& name) {
     // Check if the chatroom does not already exist
@@ -240,8 +244,6 @@ void Server::handleUsernameRequest(int client_socket) {
 }
 
 
-
-
 void Server::handleClientData(int client_socket) {
     char buffer[4096];
     int bytesRead = recv(client_socket, buffer, sizeof(buffer), 0);
@@ -293,6 +295,7 @@ void Server::displayMenu(int client_socket) {
     sendMessage(client_socket, menuMessage);
     std::cout << "Menu displayed to client: Socket FD " << client_socket << std::endl;
 }
+
 
 void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     chatrooms[chatroomName].clients.insert(client_socket);
@@ -436,7 +439,6 @@ void Server::setForbiddenWords(const std::string& chatroomName, const std::strin
     }
 }
 
-
 // MENU
 void Server::processMenuMessage(int client_socket, const Message& message) {
     std::string currentChatroom = findClientChatroom(client_socket);
@@ -450,7 +452,6 @@ void Server::processMenuMessage(int client_socket, const Message& message) {
         sendMessage(client_socket, notInChatroomMessage);
     }
 }
-
 
 // QUIT
 void Server::processQuitMessage(int client_socket, const Message& message) {
@@ -474,7 +475,6 @@ void Server::processPostMessage(int client_socket, const Message& message) {
         sendMessage(client_socket, notInChatroomMessage);
     }
 }
-
 
 
 void Server::leaveChatroom(int client_socket) {
@@ -517,6 +517,7 @@ void Server::closeClientConnection(int client_socket) {
     close(client_socket);
     clientUsernames.erase(client_socket);
 }
+
 
 std::string Server::findClientChatroom(int client_socket) {
     // Iterate through all chatrooms

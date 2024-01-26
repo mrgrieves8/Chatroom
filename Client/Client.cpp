@@ -11,11 +11,11 @@
 #include <termios.h>
 
 
-
 Client::Client(const std::string& serverIP, int serverPort)
     : serverIP(serverIP), serverPort(serverPort), clientSocket(-1), state(ClientState::PreLogin) {
     // Constructor initialization if needed
 }
+
 
 Client::~Client() {
     // Cleanup resources if needed
@@ -23,6 +23,7 @@ Client::~Client() {
         close(clientSocket);
     }
 }
+
 
 bool Client::connectToServer() {
     // Create a socket to connect to the server
@@ -46,6 +47,7 @@ bool Client::connectToServer() {
 
     return true;
 }
+
 
 void Client::startReceivingMessages() {
     std::thread receiveThread([this]() {
@@ -81,11 +83,13 @@ void Client::startReceivingMessages() {
     receiveThread.detach();
 }
 
+
 void Client::notifyReadyToSend() {
     std::lock_guard<std::mutex> lock(mtx);
     readyToSend = true;
     cv.notify_one();
 }
+
 
 void Client::startChatSession() {
     if (!connectToServer()) {
@@ -122,6 +126,7 @@ void Client::startChatSession() {
     }
 }
 
+
 void Client::handleQuitting() {
     // Close the socket and perform any necessary cleanup
     
@@ -131,6 +136,7 @@ void Client::handleQuitting() {
     }
     std::cout << "Client disconnected and resources cleaned up." << std::endl;
 }
+
 
 void Client::handleSelectingChatroom() {
     std::string message;
@@ -157,6 +163,7 @@ std::string getInputAndClearLine() {
     return input;
 }
 
+
 void Client::handleInChatroom() {
     std::string message = getInputAndClearLine();
     if (message == "/leave") {
@@ -170,10 +177,12 @@ void Client::handleInChatroom() {
     }
 }
 
+
 void Client::waitForMessageReady() {
     std::unique_lock<std::mutex> lock(mtx);
     cv.wait(lock, [this]{ return readyToSend; });
 }
+
 
 void Client::setNotReadyToSend() {
     std::lock_guard<std::mutex> lock(mtx);
@@ -185,6 +194,7 @@ void Client::sendMessage(const Message& message) {
     std::string serializedMessage = message.serialize();
     send(clientSocket, serializedMessage.c_str(), serializedMessage.length(), 0);
 }
+
 
 Message Client::receiveMessage() {
     char buffer[1024] = {0};
@@ -199,6 +209,7 @@ Message Client::receiveMessage() {
     Message deserializedMessage = Message::deserialize(receivedData);
     return deserializedMessage;
 }
+
 
 void Client::handleServerResponse() {
     // Getting username from the user
