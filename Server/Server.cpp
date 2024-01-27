@@ -108,10 +108,12 @@ bool Server::initEpoll() {
     return true;
 }
 
-// Signal handler for graceful shutdown
+// Global variable 'running' to manage server state. It's global because signal handlers, 
+// used with signal() calls, cannot access non-static class members.
 std::atomic<bool> running(true);
 
-
+// Signal handler 'signalHandler' for graceful shutdown. It's global to modify 'running' 
+// and to be compatible with signal() system call requirements.
 void signalHandler(int signum) {
     std::cout << "\nInterrupt signal (" << signum << ") received. Shutting down..." << std::endl;
     running = false;
