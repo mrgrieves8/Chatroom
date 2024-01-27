@@ -19,15 +19,16 @@ public:
 
     Client(const std::string& serverIP, int serverPort);
     virtual ~Client();
-    bool connectToServer();
     void startChatSession();
+    
+
+private:
+    bool connectToServer();
     void handleQuitting();
     void handleSelectingChatroom();
     void handleInChatroom();
     void sendMessage(const Message &message);
     Message receiveMessage();
-
-private:
     std::string serverIP;
     int serverPort;
     int clientSocket;

@@ -21,9 +21,7 @@ public:
     virtual ~Server();
     bool init();
     void run();
-    std::string findClientChatroom(int client_socket);
-
-    bool isUsernameAvailable(const std::string &username);
+    
 
 private:
     std::string ip;
@@ -52,7 +50,8 @@ private:
     void closeAllConnections();
     void processJoinMessage(int client_socket, const Message& message);
     void processCreateChatroomMessage(int client_socket, const Message &message);
-    
+    std::string findClientChatroom(int client_socket);
+    bool isUsernameAvailable(const std::string &username);
     void processMenuMessage(int client_socket, const Message &message);
     void processQuitMessage(int client_socket, const Message& message);
     void processPostMessage(int client_socket, const Message& message);
