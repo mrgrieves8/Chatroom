@@ -39,9 +39,9 @@ private:
     void handleClientData(int client_socket);
     void processClientMessage(int client_socket, const std::string& serializedMessage);
     void sendWelcomeMessage(int client_socket);
+    void createChatroom(const std::string& name, const std::set<std::string>& forbiddenWords = {});
     void handleUsernameRequest(int client_socket);
     void displayMenu(int client_socket);
-    void createChatroom(const std::string& name);
     void joinChatroom(int client_socket, const std::string& chatroomName);
     void broadcastMessage(const std::string& chatroomName, const Message& message);
     void handleClientDisconnect(int client_socket);

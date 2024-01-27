@@ -193,23 +193,12 @@ void Server::sendWelcomeMessage(int client_socket) {
 }
 
 
-void Server::createChatroom(const std::string& name) {
-    // Check if the chatroom does not already exist
-    if (chatrooms.find(name) == chatrooms.end()) {
-        Chatroom newChatroom;
-        newChatroom.name = name;
-
-        // Add a default message to the chatroom's history
-        std::string welcomeMessage = "\n[Server]: Welcome to the chatroom '" + name + 
-        "'.\nYou can send messages to the chat now.\nType '/leave' to exit the chatroom.";
-        newChatroom.messages.push_back(welcomeMessage);
-
-        // Save the new chatroom
-        chatrooms[name] = newChatroom;
-        std::cout << "Chatroom '" << name << "' created successfully with welcome message." << std::endl;
-    } else {
-        std::cout << "Chatroom '" << name << "' already exists." << std::endl;
-    }
+void Server::createChatroom(const std::string& name, const std::set<std::string>& forbiddenWords) {
+    Chatroom newChatroom(name, forbiddenWords);
+    std::string welcomeMessage = "\n[Server]: Welcome to the chatroom '" + name + "'.\nYou can send messages to the chat now.\nType '/leave' to exit the chatroom.";
+    newChatroom.addMessage(welcomeMessage);
+    chatrooms[name] = newChatroom;
+    std::cout << "Chatroom '" << name << "' created successfully with welcome message." << std::endl;
 }
 
 
@@ -306,7 +295,7 @@ void Server::displayMenu(int client_socket) {
 
 
 void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
-    chatrooms[chatroomName].clients.insert(client_socket);
+    chatrooms[chatroomName].addClient(client_socket);
     clientToChatroomMap[client_socket] = chatroomName;
     std::cout << "Socket FD " << client_socket << " has joined room " << chatroomName << std::endl;
 
@@ -315,7 +304,7 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     
     // Build the chat history as a single string
     std::stringstream chatHistory;
-    for (const std::string& messageBody : chatrooms[chatroomName].messages) {
+    for (const std::string& messageBody : chatrooms[chatroomName].getMessages()) {
         chatHistory << messageBody << "\n";  // Add each message to the stream
     }
 
@@ -329,16 +318,16 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
 
 void Server::broadcastMessage(const std::string& chatroomName, const Message& message) {
     // Replace forbidden words
-    std::string modifiedMessageBody = replaceForbiddenWords(message.getBody(), chatrooms[chatroomName].forbiddenWords);
+    std::string modifiedMessageBody = replaceForbiddenWords(message.getBody(), chatrooms[chatroomName].getForbiddenWords());
 
     // Broadcast modified message
     Message modifiedMessage(message.getType(), modifiedMessageBody);
-    for (int client_socket : chatrooms[chatroomName].clients) {
+    for (int client_socket : chatrooms[chatroomName].getClients()) {
         sendMessage(client_socket, modifiedMessage);
     }
 
     // Add to chat history
-    chatrooms[chatroomName].messages.push_back(modifiedMessageBody);
+    chatrooms[chatroomName].addMessage(modifiedMessageBody);
 }
 
 
@@ -423,14 +412,13 @@ void Server::processCreateChatroomMessage(int client_socket, const Message& mess
     std::getline(ss, chatroomName, ';');
 
     if (chatrooms.find(chatroomName) == chatrooms.end()) {
-        createChatroom(chatroomName);
-
-        std::string forbiddenWords;
-        std::getline(ss, forbiddenWords);
-        setForbiddenWords(chatroomName, forbiddenWords);
-
+        std::set<std::string> forbiddenWords;
+        std::string word;
+        while (std::getline(ss, word, ',')) {
+            forbiddenWords.insert(word);
+        }
+        createChatroom(chatroomName, forbiddenWords);
         joinChatroom(client_socket, chatroomName); // Automatically join the creator to the chatroom
-    
         std::cout << "New chatroom '" << chatroomName << "' created and forbidden words set by client: " << client_socket << std::endl;
     } else {
         Message errorMsg(MessageType::POST, "Chatroom '" + chatroomName + "' already exists.");
@@ -450,7 +438,7 @@ void Server::setForbiddenWords(const std::string& chatroomName, const std::strin
 // MENU
 void Server::processMenuMessage(int client_socket, const Message& message) {
     std::string currentChatroom = findClientChatroom(client_socket);
-    std::cout << "[DEBUG] Processing menu message for client " << client_socket << ". In chatroom: " << currentChatroom << std::endl; 
+    std::cout << "Processing menu message for client " << client_socket << ". In chatroom: " << currentChatroom << std::endl; 
     
     if (!currentChatroom.empty()) {
         displayMenu(client_socket);
@@ -494,7 +482,7 @@ void Server::leaveChatroom(int client_socket) {
         auto& chatroom = chatrooms[chatroomName];
 
         // Remove the client from the chatroom's client list
-        chatroom.clients.erase(client_socket);
+        chatroom.removeClient(client_socket);
 
         // Erase the client from the clientToChatroomMap
         clientToChatroomMap.erase(it);
@@ -502,7 +490,7 @@ void Server::leaveChatroom(int client_socket) {
         // Broadcast a message that the client has left the chatroom
         std::string leaveMsg = "[" + clientUsernames[client_socket].username + "] has left " + chatroomName;
         Message leaveMessage(MessageType::POST, leaveMsg);
-        std::cout << "[DEBUG] Broadcasting leave message for client " << client_socket << " in chatroom " << chatroomName << std::endl;
+        std::cout << "Broadcasting leave message for client " << client_socket << " in chatroom " << chatroomName << std::endl;
         broadcastMessage(chatroomName, leaveMessage);
         
         std::cout << "Client " << client_socket << " has left the chatroom: " << chatroomName << std::endl;
@@ -512,7 +500,7 @@ void Server::leaveChatroom(int client_socket) {
 
 void Server::handleClientDisconnect(int client_socket) {
     std::string chatroomName = findClientChatroom(client_socket);
-    std::cout << "[DEBUG] Handling client disconnect for client " << client_socket << ". In chatroom: " << chatroomName << std::endl;
+    std::cout << "Handling client disconnect for client " << client_socket << ". In chatroom: " << chatroomName << std::endl;
     if (!chatroomName.empty()) {
         leaveChatroom(client_socket);
     }
@@ -534,7 +522,7 @@ std::string Server::findClientChatroom(int client_socket) {
         const Chatroom& chatroom = pair.second;
 
         // Check if the client is in the current chatroom
-        if (chatroom.clients.find(client_socket) != chatroom.clients.end()) {
+        if (chatroom.getClients().find(client_socket) != chatroom.getClients().end()) {
             return chatroomName;
         }
     }

@@ -7,18 +7,26 @@
 
 class Chatroom {
 public:
-    std::string name;
-    std::set<int> clients; // Set of client sockets in the chatroom
-    std::vector<std::string> messages; // History of messages in the chatroom
-    std::set<std::string> forbiddenWords; // Forbidden words in the chatroom
-
     Chatroom() = default;
+    explicit Chatroom(const std::string& name);
+    Chatroom(const std::string& name, const std::set<std::string>& forbiddenWords);
+
+    void addClient(int clientSocket);
+    void removeClient(int clientSocket);
+    void addMessage(const std::string& message);
+    const std::string& getName() const;
+    const std::set<int>& getClients() const;
+    const std::vector<std::string>& getMessages() const;
+    const std::set<std::string>& getForbiddenWords() const;
+
     void addForbiddenWord(const std::string& word);
     bool isWordForbidden(const std::string& word) const;
-    // void createChatroom(const std::string &name);
-    // void joinChatroom(int client_socket, const std::string &chatroomName);
-    // void leaveChatroom(int client_socket);
-    // ... Other methods if needed ...
+
+private:
+    std::string name;
+    std::set<int> clients;
+    std::vector<std::string> messages;
+    std::set<std::string> forbiddenWords;
 };
 
 #endif // CHATROOM_H
