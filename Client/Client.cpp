@@ -153,16 +153,19 @@ void Client::handleSelectingChatroom() {
     }
 }
 
+// Terminal control sequences
+const std::string MOVE_CURSOR_UP = "\033[A";
+const std::string CLEAR_LINE = "\033[2K";
+
 // Function to read input line with echo, then clear the line after sending
 std::string getInputAndClearLine() {
     std::string input;
     std::getline(std::cin, input); // Echoes the input as usual
 
     // Move the cursor up one line and clear the line
-    std::cout << "\033[A\033[2K";
+    std::cout << MOVE_CURSOR_UP << CLEAR_LINE;
     return input;
 }
-
 
 void Client::handleInChatroom() {
     std::string message = getInputAndClearLine();
