@@ -29,12 +29,3 @@ Message Message::deserialize(const std::string& serializedData) {
     }
 }
 
-void Message::censorWords(const std::set<std::string>& forbiddenWords) {
-    for (const auto& word : forbiddenWords) {
-        size_t startPos = 0;
-        while ((startPos = body.find(word, startPos)) != std::string::npos) {
-            body.replace(startPos, word.length(), std::string(word.length(), '*'));
-            startPos += word.length();
-        }
-    }
-}
