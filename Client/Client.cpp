@@ -73,7 +73,7 @@ void Client::startReceivingMessages() {
                     break;
                 case MessageType::QUIT:
                     state = ClientState::Quitting;
-                    std::cerr << "Connection closed." << std::endl;
+                    std::cerr << response.getBody() << std::endl;
                     return; // Exiting the thread
                 case MessageType::POST:
                     std::cout << response.getBody() << std::endl;
@@ -135,6 +135,8 @@ void Client::handleQuitting() {
         clientSocket = -1;
     }
     std::cout << "Client disconnected and resources cleaned up." << std::endl;
+
+    exit(0);
 }
 
 
@@ -209,7 +211,6 @@ Message Client::receiveMessage() {
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
 
     if (bytesReceived <= 0) {
-        std::cout << "Connection error or server closed the connection" << std::endl;
         return Message(MessageType::QUIT, "Connection error or server closed the connection");
     }
     

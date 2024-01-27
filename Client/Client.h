@@ -11,10 +11,10 @@
 class Client {
 public:
     enum class ClientState {
-        PreLogin,
-        SelectingChatroom,
-        InChatroom,
-        Quitting
+        PreLogin,               // The client didn't send it's username and not connected to the server's EPOLL
+        SelectingChatroom,      // The client recieved the chatroom menu and is selecting a chatroom
+        InChatroom,             // The client is in a chatroom
+        Quitting                // The client is quitting the program
     };
 
     Client(const std::string& serverIP, int serverPort);
