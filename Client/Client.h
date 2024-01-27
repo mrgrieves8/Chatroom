@@ -42,11 +42,10 @@ private:
     std::mutex mtx;
     std::condition_variable cv;
     bool readyToSend = false;
-
+    std::string getInputAndClearLine();
 
     // Add other private methods as necessary
 };
 
 #endif // CLIENT_H
 
-std::string getInputAndClearLine();

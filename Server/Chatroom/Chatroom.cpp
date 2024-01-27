@@ -44,3 +44,18 @@ const std::vector<std::string>& Chatroom::getMessages() const {
 const std::set<std::string> &Chatroom::getForbiddenWords() const {
     return forbiddenWords;
 }
+
+std::string Chatroom::censorMessage(const std::string& messageBody) const {
+    std::string modifiedMessage = messageBody;
+
+    for (const auto& word : forbiddenWords) {
+        std::size_t found = modifiedMessage.find(word);
+        while (found != std::string::npos) {
+            // Replace each occurrence of the forbidden word with ***
+            modifiedMessage.replace(found, word.length(), "****");
+            found = modifiedMessage.find(word, found + 3);
+        }
+    }
+
+    return modifiedMessage;
+}

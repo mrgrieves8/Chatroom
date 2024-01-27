@@ -158,7 +158,7 @@ const std::string MOVE_CURSOR_UP = "\033[A";
 const std::string CLEAR_LINE = "\033[2K";
 
 // Function to read input line with echo, then clear the line after sending
-std::string getInputAndClearLine() {
+std::string Client::getInputAndClearLine() {
     std::string input;
     std::getline(std::cin, input); // Echoes the input as usual
 

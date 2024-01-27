@@ -19,6 +19,8 @@ public:
     const std::vector<std::string>& getMessages() const;
     const std::set<std::string>& getForbiddenWords() const;
 
+    std::string censorMessage(const std::string &messageBody) const;
+
     void addForbiddenWord(const std::string& word);
     bool isWordForbidden(const std::string& word) const;
 

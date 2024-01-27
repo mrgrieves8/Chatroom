@@ -165,7 +165,7 @@ void Server::handleNewConnection() {
 
     std::cout << "New client connected: Socket FD " << client_socket << std::endl;
     handleUsernameRequest(client_socket);
-
+    std::cout << "Handled username request " << client_socket << std::endl;
     struct epoll_event client_event;
     client_event.events = EPOLLIN;
     client_event.data.fd = client_socket;
@@ -318,7 +318,7 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
 
 void Server::broadcastMessage(const std::string& chatroomName, const Message& message) {
     // Replace forbidden words
-    std::string modifiedMessageBody = replaceForbiddenWords(message.getBody(), chatrooms[chatroomName].getForbiddenWords());
+    std::string modifiedMessageBody = chatrooms[chatroomName].censorMessage(message.getBody());
 
     // Broadcast modified message
     Message modifiedMessage(message.getType(), modifiedMessageBody);
@@ -328,21 +328,6 @@ void Server::broadcastMessage(const std::string& chatroomName, const Message& me
 
     // Add to chat history
     chatrooms[chatroomName].addMessage(modifiedMessageBody);
-}
-
-
-std::string replaceForbiddenWords(const std::string& messageBody, const std::set<std::string>& forbiddenWords) {
-    std::string modifiedMessage = messageBody;
-
-    for (const auto& word : forbiddenWords) {
-        std::size_t found = modifiedMessage.find(word);
-        while (found != std::string::npos) {
-            modifiedMessage.replace(found, word.length(), "***");
-            found = modifiedMessage.find(word, found + 3);
-        }
-    }
-
-    return modifiedMessage;
 }
 
 
@@ -427,13 +412,6 @@ void Server::processCreateChatroomMessage(int client_socket, const Message& mess
 }
 
 
-void Server::setForbiddenWords(const std::string& chatroomName, const std::string& words) {
-    std::istringstream wordsStream(words);
-    std::string word;
-    while (std::getline(wordsStream, word, ',')) {
-        chatrooms[chatroomName].addForbiddenWord(word);
-    }
-}
 
 // MENU
 void Server::processMenuMessage(int client_socket, const Message& message) {
