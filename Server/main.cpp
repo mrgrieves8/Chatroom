@@ -4,9 +4,15 @@
 
 using namespace std;
 
-int main() {
-    string serverIP = "127.0.0.1";
-    int serverPort = 54000;
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        cerr << "Usage: " << argv[0] << " <server_ip> <server_port>" << endl;
+        return 1;
+    }
+
+    string serverIP = argv[1];
+    int serverPort = atoi(argv[2]);
+
     Server server(serverIP, serverPort);
 
     if (server.init()) {

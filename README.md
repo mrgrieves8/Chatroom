@@ -22,11 +22,13 @@ Run the provided script to build the project:
 
 ### Server
 1. Navigate to the build directory: `cd build/Server`
-2. Start the server: `./Server`
+2. Start the server: `./Server [ip] [port]`
+ - for example:      `./Server 127.0.0.1 54000`
 
 ### Client
 1. In a new terminal, navigate to the build directory: `cd build/Client`
-2. Start a client instance: `./Client`
+2. Start a client instance: `./Client [ip] [port]`
+ - for example:             `./Client 127.0.0.1 54000`
 
 ## Features
 - Create and join chatrooms
