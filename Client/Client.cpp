@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <sstream>
 #include <thread>
 #include "../common/Message.h"
 #include <atomic>

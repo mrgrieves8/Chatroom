@@ -8,9 +8,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <unordered_map>
-#include <set>
 #include <sstream>
-#include <vector>
 #include <set>
 #include <atomic>
 #include <csignal>
