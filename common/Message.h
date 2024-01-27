@@ -36,7 +36,7 @@ public:
 
     std::string serialize() const;
     static Message deserialize(const std::string& serializedData);
-    void censorWords(const std::set<std::string>& forbiddenWords);
+    
 };
 
 #endif
