@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <set>
 #include "Chatroom/Chatroom.h"
-#include "../common/Message.h" // Include the Message class
+#include "../common/Message.h" 
 
 
 class ClientInfo {
@@ -57,7 +57,7 @@ private:
     void processQuitMessage(int client_socket, const Message& message);
     void processPostMessage(int client_socket, const Message& message);
     void sendMessage(int client_socket, const Message& message);
-    // Add other private helper methods as necessary
+
 };
 
 #endif // SERVER_H

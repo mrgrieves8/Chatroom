@@ -20,7 +20,6 @@
 
 Server::Server(const std::string& ip, int port) : ip(ip), port(port), server_fd(-1), epoll_fd(-1) {
     std::cout << "Initializing server..." << std::endl;
-    // Additional initialization if needed
 }
 
 
@@ -220,11 +219,14 @@ void Server::handleUsernameRequest(int client_socket) {
         } else if (!isUsernameAvailable(username)) {
             sendMessage(client_socket, Message(MessageType::QUIT, "Username taken. Please reconnect with a different username."));
         } else {
+            // If the username is valid and available, proceed to assign it to the client
             ClientInfo newClient;
             newClient.username = username;
             newClient.socketNum = client_socket;
             clientUsernames[client_socket] = newClient;
             std::cout << "Username '" << username << "' is valid and assigned to client: Socket FD " << client_socket << std::endl;
+
+            // Display the chat menu for the client
             displayMenu(client_socket);
             return; // Continue with the normal flow
         }
@@ -299,9 +301,6 @@ void Server::joinChatroom(int client_socket, const std::string& chatroomName) {
     clientToChatroomMap[client_socket] = chatroomName;
     std::cout << "Socket FD " << client_socket << " has joined room " << chatroomName << std::endl;
 
-    // Message joinConfirmMsg(MessageType::JOIN,  "\n");
-    // sendMessage(client_socket, joinConfirmMsg);
-    
     // Build the chat history as a single string
     std::stringstream chatHistory;
     for (const std::string& messageBody : chatrooms[chatroomName].getMessages()) {

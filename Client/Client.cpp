@@ -10,15 +10,16 @@
 #include <atomic>
 #include <termios.h>
 
+// Terminal control sequences
+const std::string MOVE_CURSOR_UP = "\033[A";
+const std::string CLEAR_LINE = "\033[2K";
 
 Client::Client(const std::string& serverIP, int serverPort)
     : serverIP(serverIP), serverPort(serverPort), clientSocket(-1), state(ClientState::PreLogin) {
-    // Constructor initialization if needed
 }
 
 
 Client::~Client() {
-    // Cleanup resources if needed
     if (clientSocket != -1) {
         close(clientSocket);
     }
@@ -50,9 +51,13 @@ bool Client::connectToServer() {
 
 
 void Client::startReceivingMessages() {
-    std::thread receiveThread([this]() {
+    // Create a separate thread for receiving messages
+    std::thread receiveThread([this]() { 
         while (true) {
+            // Receive a message from the server
             Message response = receiveMessage();
+
+            // Process the received message based on its type
             switch (response.getType()) {
                 case MessageType::JOIN:
                     system("clear");
@@ -84,18 +89,14 @@ void Client::startReceivingMessages() {
 }
 
 
-void Client::notifyReadyToSend() {
-    std::lock_guard<std::mutex> lock(mtx);
-    readyToSend = true;
-    cv.notify_one();
-}
-
-
 void Client::startChatSession() {
+    // Attempt to connect to the server
     if (!connectToServer()) {
         std::cerr << "Failed to connect to server." << std::endl;
-        return;
+        return; // Exit the function if the connection fails
     }
+
+    // Start a separate thread to receive messages from the server
     startReceivingMessages();
 
     if (state == ClientState::PreLogin) {
@@ -103,7 +104,7 @@ void Client::startChatSession() {
         state = ClientState::SelectingChatroom;
     }
     
-
+     // Continue running as long as the client is not in the "Quitting" state
     while (state != ClientState::Quitting) {
         waitForMessageReady();
 
@@ -121,7 +122,6 @@ void Client::startChatSession() {
                 return;
 
         }
-
         setNotReadyToSend();
     }
 }
@@ -153,9 +153,6 @@ void Client::handleSelectingChatroom() {
     }
 }
 
-// Terminal control sequences
-const std::string MOVE_CURSOR_UP = "\033[A";
-const std::string CLEAR_LINE = "\033[2K";
 
 // Function to read input line with echo, then clear the line after sending
 std::string Client::getInputAndClearLine() {
@@ -166,6 +163,7 @@ std::string Client::getInputAndClearLine() {
     std::cout << MOVE_CURSOR_UP << CLEAR_LINE;
     return input;
 }
+
 
 void Client::handleInChatroom() {
     std::string message = getInputAndClearLine();
@@ -180,13 +178,20 @@ void Client::handleInChatroom() {
     }
 }
 
+// Notify that the client is ready to send a message
+void Client::notifyReadyToSend() {
+    std::lock_guard<std::mutex> lock(mtx);
+    readyToSend = true;
+    cv.notify_one();
+}
 
+// Wait until the client is ready to send a message
 void Client::waitForMessageReady() {
     std::unique_lock<std::mutex> lock(mtx);
     cv.wait(lock, [this]{ return readyToSend; });
 }
 
-
+// Set the client as not ready to send a message
 void Client::setNotReadyToSend() {
     std::lock_guard<std::mutex> lock(mtx);
     readyToSend = false;

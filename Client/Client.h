@@ -44,7 +44,6 @@ private:
     bool readyToSend = false;
     std::string getInputAndClearLine();
 
-    // Add other private methods as necessary
 };
 
 #endif // CLIENT_H
