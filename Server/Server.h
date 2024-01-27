@@ -5,44 +5,14 @@
 #include <vector>
 #include <unordered_map>
 #include <set>
+#include "Chatroom/Chatroom.h"
 #include "../common/Message.h" // Include the Message class
 
-class Chatroom {
-public:
-    std::string name;
-    int adminSocket; // Socket number of the admin
-    std::set<int> clients;
-    std::vector<std::string> messages;
-    std::set<std::string> forbiddenWords; // Store forbidden words
-
-    // Constructor
-    Chatroom() : adminSocket(-1) {}
-
-    // Methods to manage forbidden words, admin, etc.
-    void addForbiddenWord(const std::string& word) {
-        forbiddenWords.insert(word);
-    }
-
-    bool isWordForbidden(const std::string& word) const {
-        return forbiddenWords.find(word) != forbiddenWords.end();
-    }
-
-    void setAdmin(int socket) {
-        adminSocket = socket;
-    }
-
-    bool isAdmin(int socket) const {
-        return socket == adminSocket;
-    }
-    
-    // ... Other methods ...
-};
 
 class ClientInfo {
 public:
     std::string username;
     int socketNum;
-    // Add more fields or methods as necessary
 };
 
 class Server {

@@ -14,6 +14,7 @@
 #include <set>
 #include <atomic>
 #include <csignal>
+#include "Chatroom/Chatroom.h"
 #include "../common/Message.h"
 
 
@@ -60,6 +61,13 @@ bool Server::createServerSocket() {
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd == -1) {
         std::cerr << "Error creating a socket" << std::endl;
+        return false;
+    }
+
+    // Set SO_REUSEADDR to ensure the port is freed immediately after server shutdown
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+        std::cerr << "Error setting SO_REUSEADDR" << std::endl;
         return false;
     }
 
@@ -416,13 +424,13 @@ void Server::processCreateChatroomMessage(int client_socket, const Message& mess
 
     if (chatrooms.find(chatroomName) == chatrooms.end()) {
         createChatroom(chatroomName);
-        chatrooms[chatroomName].setAdmin(client_socket);
 
         std::string forbiddenWords;
         std::getline(ss, forbiddenWords);
         setForbiddenWords(chatroomName, forbiddenWords);
 
         joinChatroom(client_socket, chatroomName); // Automatically join the creator to the chatroom
+    
         std::cout << "New chatroom '" << chatroomName << "' created and forbidden words set by client: " << client_socket << std::endl;
     } else {
         Message errorMsg(MessageType::POST, "Chatroom '" + chatroomName + "' already exists.");
