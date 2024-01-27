@@ -34,3 +34,10 @@ Run the provided script to build the project:
 - Create and join chatrooms
 - Send and receive messages in real-time
 - Handle forbidden words in chatrooms
+
+## Video Demo
+
+
+
+https://github.com/mrgrieves8/Chatroom/assets/72612583/82f4c2e4-7f59-4042-84c0-5226050756e2
+
