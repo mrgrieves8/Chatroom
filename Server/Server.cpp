@@ -14,6 +14,7 @@
 #include <csignal>
 #include "Chatroom/Chatroom.h"
 #include "../common/Message.h"
+#include <thread>
 
 
 Server::Server(const std::string& ip, int port) : ip(ip), port(port), server_fd(-1), epoll_fd(-1) {
@@ -138,7 +139,8 @@ void Server::run() {
 
         for (int i = 0; i < num_events; i++) {
             if (events[i].data.fd == server_fd) {
-                handleNewConnection();
+               // Create a new thread to handle the new connection
+                std::thread([this] { this->handleNewConnection(); }).detach();
             } else {
                 handleClientData(events[i].data.fd);
             }
@@ -170,32 +172,6 @@ void Server::handleNewConnection() {
         std::cerr << "Error adding client socket to epoll: " << strerror(errno) << std::endl;
         close(client_socket); // Ensure the socket is closed on error
     }
-}
-
-
-void Server::closeAllConnections() {
-    // Close all client sockets and clean up resources
-    for (auto& pair : clientUsernames) {
-        close(pair.first); // Close each client socket
-    }
-    close(server_fd);  // Close the server socket
-    close(epoll_fd);   // Close the epoll file descriptor
-}
-
-
-void Server::sendWelcomeMessage(int client_socket) {
-    Message welcomeMessage(MessageType::POST, "Welcome to the chat server!\nPlease enter username:");
-    sendMessage(client_socket, welcomeMessage);
-    std::cout << "Welcome message sent to client: Socket FD " << client_socket << std::endl;
-}
-
-
-void Server::createChatroom(const std::string& name, const std::set<std::string>& forbiddenWords) {
-    Chatroom newChatroom(name, forbiddenWords);
-    std::string welcomeMessage = "\n[Server]: Welcome to the chatroom '" + name + "'.\nYou can send messages to the chat now.\nType '/leave' to exit the chatroom.";
-    newChatroom.addMessage(welcomeMessage);
-    chatrooms[name] = newChatroom;
-    std::cout << "Chatroom '" << name << "' created successfully with welcome message." << std::endl;
 }
 
 
@@ -238,6 +214,32 @@ void Server::handleUsernameRequest(int client_socket) {
     
     // Close the connection if the username is invalid or if an error occurred
     close(client_socket);
+}
+
+
+void Server::closeAllConnections() {
+    // Close all client sockets and clean up resources
+    for (auto& pair : clientUsernames) {
+        close(pair.first); // Close each client socket
+    }
+    close(server_fd);  // Close the server socket
+    close(epoll_fd);   // Close the epoll file descriptor
+}
+
+
+void Server::sendWelcomeMessage(int client_socket) {
+    Message welcomeMessage(MessageType::POST, "Welcome to the chat server!\nPlease enter username:");
+    sendMessage(client_socket, welcomeMessage);
+    std::cout << "Welcome message sent to client: Socket FD " << client_socket << std::endl;
+}
+
+
+void Server::createChatroom(const std::string& name, const std::set<std::string>& forbiddenWords) {
+    Chatroom newChatroom(name, forbiddenWords);
+    std::string welcomeMessage = "\n[Server]: Welcome to the chatroom '" + name + "'.\nYou can send messages to the chat now.\nType '/leave' to exit the chatroom.";
+    newChatroom.addMessage(welcomeMessage);
+    chatrooms[name] = newChatroom;
+    std::cout << "Chatroom '" << name << "' created successfully with welcome message." << std::endl;
 }
 
 
